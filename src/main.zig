@@ -1,7 +1,15 @@
 //! This program performs some insanely difficult parallel program
 
 const std = @import("std");
+const time = std.time;
+
 const unopt = @import("sequential.zig");
+const para = @import("parallel.zig");
+
+/// Calculates time
+fn nanos_to_secs(val: u64) f64 {
+    return @intToFloat(f64, val) / @as(f64, 10e8);
+}
 
 pub fn main() !void {
     // stdout is for the actual output of your application, for example if you
@@ -23,23 +31,37 @@ pub fn main() !void {
     if (try stdin.readUntilDelimiterOrEof(buf[0..], '\n')) |user_input| {
         iterations = try std.fmt.parseInt(i32, user_input, 10);
     } else {
-        // Default is 1-
+        // Default is 5
         iterations = @as(i32, 5);
     }
 
     std.debug.print("Running Monte Carlo Approximation of pi....\n", .{});
 
-    // Take input from user
+    // ========================
     // Normal
-    const unoptpi = unopt.monte(iterations);
+    // ========================
 
-    std.debug.print("Unoptimized: {}\n", .{unoptpi});
+    var slow_timer = try time.Timer.start();
+    const slow_monte = unopt.monte(iterations);
+    const elapsed = slow_timer.read();
+    const time_unopt = nanos_to_secs(elapsed);
+
+    std.debug.print("Unoptimized Pi: {d:.3}\n Time: {d:.2}s\n", .{ slow_monte, time_unopt });
 
     // ========================
     // Parallel
     // ========================
 
+    // timer.reset();
+    //const monte_fast = para.fast_monte(iterations);
+    //const stop2 = time.Timer.lap();
+    //const time_opt = nanos_to_secs(stop2 - start2);
+
     //try stdout.print("Optimized: {}\n", .{unoptpi});
+
+    //std.debug.print("Unoptimized: {}\n Time: {d:.2}s\n", .{ monte_fast, time_opt });
+
+    //std.debug.print("Speedup is {} for {} added threads here in ZIG!", .{ time_unopt / time_opt, 4 });
 
     // Clean
     // try bw.flush();
