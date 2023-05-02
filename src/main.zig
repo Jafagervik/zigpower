@@ -41,9 +41,9 @@ pub fn main() !void {
     // Normal
     // ========================
 
-    var slow_timer = try time.Timer.start();
+    var timer = try time.Timer.start();
     const slow_monte = unopt.monte(iterations);
-    const elapsed = slow_timer.read();
+    const elapsed = timer.read();
     const time_unopt = nanos_to_secs(elapsed);
 
     std.debug.print("Unoptimized Pi: {d:.3}\n Time: {d:.2}s\n", .{ slow_monte, time_unopt });
@@ -52,17 +52,12 @@ pub fn main() !void {
     // Parallel
     // ========================
 
-    // timer.reset();
-    //const monte_fast = para.fast_monte(iterations);
-    //const stop2 = time.Timer.lap();
-    //const time_opt = nanos_to_secs(stop2 - start2);
+    timer.reset();
+    const monte_fast = para.fast_monte(iterations);
+    const stop2 = timer.lap();
+    const time_opt = nanos_to_secs(stop2);
 
-    //try stdout.print("Optimized: {}\n", .{unoptpi});
-
-    //std.debug.print("Unoptimized: {}\n Time: {d:.2}s\n", .{ monte_fast, time_opt });
+    std.debug.print("Ooptimized: {}\n Time: {d:.2}s\n", .{ monte_fast, time_opt });
 
     //std.debug.print("Speedup is {} for {} added threads here in ZIG!", .{ time_unopt / time_opt, 4 });
-
-    // Clean
-    // try bw.flush();
 }
