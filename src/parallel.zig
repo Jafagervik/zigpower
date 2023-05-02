@@ -6,66 +6,72 @@ const time = @cImport(@cInclude("time.h"));
 const cstd = @cImport(@cInclude("stdlib.h"));
 
 /// Change this when you feel like it
-pub const NUM_THREADS = 4;
+pub const NUM_THREADS: i32 = 4;
 
 /// Array containing our threads as in pthreads
 var threads: [NUM_THREADS]Thread = undefined;
 
-/// Each thread does local work and adds to this
-/// Think about what errors can occur when dealing with it this way
-var count: [NUM_THREADS]f32 = undefined;
-
-/// A way to get random numbers in zig without having to use C
-fn get_random_number() f32 {
-    cstd.srand(@intCast(u32, time.time(0)));
-    return @intToFloat(f32, @as(i32, cstd.rand())) / @intToFloat(f32, @as(i32, cstd.RAND_MAX));
-}
+var cps: [NUM_THREADS]i32 = undefined;
+var sps: [NUM_THREADS]i32 = undefined;
 
 /// Only updates the area in memory it is working against
-fn monte_thread(value: *f32, total: *i32, event: *Thread.ResetEvent) void {
-    var tot = total.*;
+fn monte_thread(circle_point: *i32, square_point: *i32, loc_work: *i32, iters: *i32, event: *Thread.ResetEvent) void {
+    var iterations = iters.*;
+    var tot = loc_work.*;
+    circle_point.* = 0;
+    square_point.* = 0;
 
     var i: usize = 0;
     while (i < tot) : (i += 1) {
-        const x: f32 = get_random_number();
-        const y: f32 = get_random_number();
+        const x: f32 = @as(f32, @intToFloat(f32, @as(i32, @rem(cstd.rand(), @divFloor(iterations, 4)) + 1))) / @intToFloat(f32, @divFloor(iterations, 4));
+        const y: f32 = @as(f32, @intToFloat(f32, @as(i32, @rem(cstd.rand(), @divFloor(iterations, 4)) + 1))) / @intToFloat(f32, @divFloor(iterations, 4));
 
-        var circle_radius = std.math.sqrt(x * x + y * y);
+        var origin_dist: f32 = std.math.pow(f32, x, 2) + std.math.pow(f32, y, 2);
 
-        if (circle_radius <= 1.0) {
-            value.* += 1;
+        if (origin_dist <= 1.0) {
+            circle_point.* += 1;
         }
+
+        square_point.* += 1;
     }
     event.set();
 }
 
 /// Random boring approximation of the monte carlo algorithm
 pub fn fast_monte(iterations: i32) f32 {
+    cstd.srand(@intCast(u32, time.time(0)));
+
     if (@rem(iterations, NUM_THREADS) != 0) {
         std.debug.print("Oops, you need a factor amount of threads compared to total iterations!", .{});
         return 1.0;
     }
-    var total: i32 = @divFloor(iterations, NUM_THREADS);
+    var loc_work: i32 = std.math.pow(i32, @intCast(i32, @divExact(iterations, NUM_THREADS)), 2);
 
+    std.debug.print("Loc work: {}\n", .{loc_work});
     var pi: f32 = undefined;
+    var its = iterations;
 
     // Spawn threads and initialize work
     var i: usize = 0;
     while (i < NUM_THREADS) : (i += 1) {
         var event = Thread.ResetEvent{};
-        threads[i] = try Thread.spawn(.{}, monte_thread, .{ &count[i], &total, &event });
+        const spawn_config = Thread.SpawnConfig{ .stack_size = 5000 };
+        threads[i] = Thread.spawn(spawn_config, monte_thread, .{ &cps[i], &sps[i], &loc_work, &its, &event }) catch @panic("Oops!");
+        threads[i].detach();
     }
 
-    var count_circle: i32 = 0;
+    var circle_points: i32 = 0;
+    var square_points: i32 = 0;
+
+    for (cps) |cp, s| {
+        circle_points += cp;
+        square_points += sps[s];
+    }
+
+    pi = @intToFloat(f32, 4 * circle_points) / @intToFloat(f32, square_points);
 
     // JOIN threads
     // NOTE: Thread.detatch() can also be used!
-    for (threads) |t, j| {
-        t.join();
-        count_circle += count[j];
-    }
-
-    pi = 4.0 * @intToFloat(f32, count_circle) / @intToFloat(f32, total) / @as(f32, NUM_THREADS);
 
     return pi;
 }

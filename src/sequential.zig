@@ -1,8 +1,6 @@
 const std = @import("std");
 const math = std.math;
-const io = std.io;
 const mem = std.mem;
-const os = std.os;
 
 // C imports
 const time = @cImport(@cInclude("time.h"));
@@ -21,8 +19,6 @@ pub fn monte(interval: i32) f32 {
 
     // One way to write for loops in ZIG
     const maxrange = math.pow(i64, interval, 2);
-
-    std.debug.print("Maxrange: {}\n", .{maxrange});
 
     var i: usize = 0;
     while (i < maxrange) : (i += 1) {

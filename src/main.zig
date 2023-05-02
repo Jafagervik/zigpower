@@ -52,12 +52,12 @@ pub fn main() !void {
     // Parallel
     // ========================
 
-    timer.reset();
+    var timer2 = try time.Timer.start();
     const monte_fast = para.fast_monte(iterations);
-    const stop2 = timer.lap();
-    const time_opt = nanos_to_secs(stop2);
+    const elapsed2 = timer2.read();
+    const time_opt = nanos_to_secs(elapsed2);
 
-    std.debug.print("Ooptimized: {}\n Time: {d:.2}s\n", .{ monte_fast, time_opt });
+    std.debug.print("Optimized: {d:.3}\n Time: {d:.2}s\n", .{ monte_fast, time_opt });
 
-    //std.debug.print("Speedup is {} for {} added threads here in ZIG!", .{ time_unopt / time_opt, 4 });
+    std.debug.print("Speedup is {d:.2} for {} added threads here in ZIG!\n", .{ time_unopt / time_opt, 4 });
 }
