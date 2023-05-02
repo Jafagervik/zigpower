@@ -1,0 +1,9 @@
+const std = @import("std");
+
+test "simple test" {
+    var list = std.ArrayList(i32).init(std.testing.allocator);
+    // Execute deallocation at the end of this block
+    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
+    try list.append(42);
+    try std.testing.expectEqual(@as(i32, 42), list.pop());
+}
