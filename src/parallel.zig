@@ -63,7 +63,7 @@ pub fn fast_monte(iterations: i32) f32 {
     var circle_points: i32 = 0;
     var square_points: i32 = 0;
 
-    for (cps) |cp, s| {
+    for (cps, 0..) |cp, s| {
         circle_points += cp;
         square_points += sps[s];
     }

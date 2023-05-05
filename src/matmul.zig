@@ -4,7 +4,7 @@ const std = @import("std");
 const Matrix = [][]f32;
 
 /// Size of vector
-const N: usize = 1 << 9;
+const N: usize = 1 << 4;
 
 const DEBUG = false;
 
@@ -22,6 +22,10 @@ fn gemm(res: *Matrix, a: *Matrix, b: *Matrix, n: usize) void {
 }
 
 pub fn main() !void {
+
+    // I cant be arsed
+    if (DEBUG and N > 7) std.debug.panic("no.\n", .{});
+
     std.log.info("Now displaying matrix multiplication!", .{});
 
     var allocator = std.heap.page_allocator;
@@ -120,4 +124,8 @@ fn _initMatrix(mat: *Matrix) void {
             std.debug.print("{d:.2}\n", .{mat.*[r][c]});
         }
     }
+}
+
+test "Verify" {
+    std.testing.expect(1 == 1);
 }
