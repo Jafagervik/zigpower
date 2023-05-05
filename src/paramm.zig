@@ -9,24 +9,23 @@ const ArgList = [2]usize;
 var N: usize = undefined;
 var NUM_THREADS: usize = undefined;
 
-const DEBUG = true;
+const DEBUG = false;
 
 // TODO: Ideally only send slice of array instead of the whole thing
 /// Worker only does its share of the workload
 fn worker(res: *Matrix, a: *Matrix, b: *Matrix, tid: *const u8) void {
     var k: usize = 0;
-    var i: usize = 0;
     var j: usize = 0;
     var sum: f32 = 0.0;
 
-    var portion: usize = @divExact(N, NUM_THREADS);
+    var portion: u16 = @intCast(u16, @divExact(N, NUM_THREADS));
 
-    var row_start: u8 = (tid.*) * @intCast(u8, portion);
-    var row_end: u8 = (tid.* + 1) * @intCast(u8, portion);
+    var row_start: u16 = (tid.*) * portion;
+    var row_end: u16 = (tid.* + 1) * portion;
 
     //std.debug.print("\ntid: {}, Start: {}, End: {}\n", .{ tid.*, row_start, row_end });
 
-    i = row_start;
+    var i: usize = row_start;
 
     while (i < row_end) : (i += 1) {
         while (j < N) : (j += 1) {
@@ -34,7 +33,9 @@ fn worker(res: *Matrix, a: *Matrix, b: *Matrix, tid: *const u8) void {
             while (k < N) : (k += 1) {
                 sum += a.*[i][k] * b.*[k][j];
             }
-            std.debug.print("\nTID: {}, i: {}, j: {}, sum: {d:.2}\n", .{ tid.*, i, j, sum });
+            if (DEBUG) {
+                std.debug.print("\nTID: {}, i: {}, j: {}, sum: {d:.2}\n", .{ tid.*, i, j, sum });
+            }
             res.*[i][j] = sum;
         }
     }
@@ -69,7 +70,7 @@ pub fn main() !void {
 
     defer thread_alloc.free(threads);
 
-    std.log.info("Now displaying matrix multiplication!", .{});
+    std.log.info("Now displaying matrix multiplication!\n", .{});
 
     // Page allocator is thread safe. See docs for more info
     var allocator = std.heap.page_allocator;
